@@ -284,20 +284,6 @@
             }
         });
 
-        // ✨ New Event Listener for Enter/Go key on text input
-        issueInput.addEventListener('keydown', (event) => {
-            // Check if the key pressed was 'Enter' (or 'Go' on mobile)
-            if (event.key === 'Enter' || event.keyCode === 13) {
-                event.preventDefault(); // Stop default behavior
-                
-                // Check if the input has text
-                if (issueInput.value.trim() !== '') {
-                    // Trigger the submit button's click event
-                    submitIssueButton.click();
-                }
-            }
-        });
-
         // ✨ 6. Get Repair Steps (New Gemini Feature)
         getStepsButton.addEventListener('click', async () => {
             if (!currentIssue) return;
@@ -386,7 +372,7 @@
                     console.warn('Unexpected API response structure:', result);
                     throw new Error('Could not parse text from API response.');
                 }
-            } catch (error) {.
+            } catch (error) {
                 console.error('Fetch error:', error);
                 throw error; // Re-throw to be caught by the event listener
             }
@@ -478,14 +464,14 @@
                         html += '<ul class="list-disc list-inside text-left mt-2">';
                         listType = 'ul';
                     }
-                    html += `<li class="mb-1">${ulMatch[1].replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</li>`; // Basic bold support
+                    html += `<li class="mb-1">${ulMatch[1]}</li>`;
                 } else if (olMatch) { // Ordered list item
                     if (listType !== 'ol') {
                         if (listType) html += (listType === 'ul' ? '</ul>' : '</ol>'); // Close previous list
                         html += '<ol class="list-decimal list-inside text-left mt-2">';
                         listType = 'ol';
                     }
-                    html += `<li class="mb-1">${olMatch[1].replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</li>`; // Basic bold support
+                    html += `<li class="mb-1">${olMatch[1]}</li>`;
                 } else { // Regular text line
                     if (listType) {
                         html += (listType === 'ul' ? '</ul>' : '</ol>'); // Close list
@@ -493,7 +479,7 @@
                     }
                     // Treat lines ending in ':' or all-caps as headings
                     if (line.endsWith(':') || (line === line.toUpperCase() && line.length > 3 && !line.includes('*'))) {
-                            html += `<p class="font-semibold text-left mt-3 mb-1">${line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</p>`; // Basic bold support
+                            html += `<p class="font-semibold text-left mt-3 mb-1">${line}</p>`;
                     } else {
                             html += `<p class="text-left mt-2">${line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</p>`; // Basic bold support
                     }
