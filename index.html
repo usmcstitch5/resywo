@@ -4,6 +4,7 @@
     <meta charset="UTF-R-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Work Order Repair Helper</title>
+    <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Custom styles */
@@ -42,7 +43,9 @@
             Take a picture of your work order to find a repair video.
         </p>
 
+        <!-- Main controls -->
         <div class="space-y-4">
+            <!-- Camera Option -->
             <div id="cameraButtonArea">
                 <button id="startButton" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-all duration-200 flex items-center justify-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -53,6 +56,7 @@
                 </button>
             </div>
 
+            <!-- ✨ New Text Input Option -->
             <div id="textInputArea" class="space-y-2 pt-2">
                 <p class="text-center text-gray-500 text-sm">- OR -</p>
                 <label for="issueInput" class="text-sm font-medium text-gray-700">Type the issue below:</label>
@@ -62,6 +66,7 @@
                 </button>
             </div>
 
+            <!-- Video and Canvas containers -->
             <div class="relative">
                 <video id="video" playsinline></video>
                 <canvas id="canvas" class="hidden"></canvas>
@@ -80,6 +85,7 @@
             </button>
         </div>
 
+        <!-- Results area -->
         <div id="results" class="mt-6 text-center">
             <div id="loading" class="hidden flex flex-col items-center justify-center">
                 <div class="loader"></div>
@@ -90,28 +96,26 @@
                 <h3 class="font-semibold text-gray-700 mb-2">Identified Issue:</h3>
                 <p id="issueText" class="text-lg text-indigo-700 font-medium"></p>
             </div>
-
-            <button id="goToAriumButton" class="w-full bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-all duration-200 hidden">
-                📸 View Common Fixes (with Pictures)
-            </button>
-
-            <button id="searchButton" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-all duration-200 hidden mt-2">
+            <button id="searchButton" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-all duration-200 hidden">
                 Find Repair Video on YouTube
             </button>
-            
+            <!-- ✨ New Gemini Feature Button -->
             <button id="getStepsButton" class="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-all duration-200 hidden mt-2">
                 ✨ Get General Repair Steps
             </button>
 
+            <!-- ✨ New Gemini Feature Results Area -->
             <div id="stepsContainer" class="mt-4 text-center">
                 <div id="stepsLoading" class="hidden flex flex-col items-center justify-center">
+                    <!-- Purple spinner to differentiate -->
                     <div class="loader" style="border-top-color: #8B5CF6;"></div> 
                     <p class="text-gray-600 mt-3">Generating repair steps...</p>
                 </div>
                 <div id="repairStepsWrapper" class="hidden">
                     <h3 class="font-semibold text-gray-700 mt-4 mb-2">General Repair Steps:</h3>
                     <div id="repairSteps" class="my-4 p-4 bg-gray-50 border border-gray-200 rounded-lg text-left text-sm">
-                        </div>
+                        <!-- Content will be injected here by the new Gemini call -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -124,11 +128,8 @@
         const recognizeButton = document.getElementById('recognizeButton');
         const resetButton = document.getElementById('resetButton');
         const searchButton = document.getElementById('searchButton');
+        // ✨ New DOM Elements
         const getStepsButton = document.getElementById('getStepsButton');
-        // ✨ NEW ARIUM BUTTON (Added)
-        const goToAriumButton = document.getElementById('goToAriumButton');
-
-        // (Original) New DOM Elements
         const issueInput = document.getElementById('issueInput');
         const submitIssueButton = document.getElementById('submitIssueButton');
         const cameraButtonArea = document.getElementById('cameraButtonArea');
@@ -204,18 +205,17 @@
             canvas.style.display = 'none';
             extractedIssue.classList.add('hidden');
             searchButton.classList.add('hidden');
-            getStepsButton.classList.add('hidden'); 
-            goToAriumButton.classList.add('hidden'); // ✨ NEW: Hide Arium button
-            repairStepsWrapper.classList.add('hidden'); 
-            repairSteps.innerHTML = ''; 
+            getStepsButton.classList.add('hidden'); // ✨ Hide new button
+            repairStepsWrapper.classList.add('hidden'); // ✨ Hide new results
+            repairSteps.innerHTML = ''; // ✨ Clear new results
             recognizeButton.classList.add('hidden');
             resetButton.classList.add('hidden');
             
             // Show start button and text input
             startButton.classList.remove('hidden');
-            cameraButtonArea.classList.remove('hidden'); 
-            textInputArea.classList.remove('hidden'); 
-            issueInput.value = ''; 
+            cameraButtonArea.classList.remove('hidden'); // ✨ Show camera button area
+            textInputArea.classList.remove('hidden'); // ✨ Show text input area
+            issueInput.value = ''; // ✨ Clear text input
             message.textContent = '';
             currentIssue = '';
         });
@@ -239,9 +239,8 @@
                 
                 issueText.textContent = currentIssue;
                 extractedIssue.classList.remove('hidden');
-                goToAriumButton.classList.remove('hidden'); // ✨ NEW: Show Arium button
                 searchButton.classList.remove('hidden');
-                getStepsButton.classList.remove('hidden'); 
+                getStepsButton.classList.remove('hidden'); // ✨ Show new button
                 resetButton.classList.remove('hidden'); // Show reset button again
 
             } catch (error) {
@@ -262,13 +261,7 @@
             }
         });
 
-        // ✨ NEW ARIUM BUTTON CLICK HANDLER (Added)
-        goToAriumButton.addEventListener('click', () => {
-            const url = 'https://ariumliving.com/maintenance-issues';
-            window.open(url, '_blank');
-        });
-
-        // (Original) Event Listener for Text Input
+        // ✨ New Event Listener for Text Input
         submitIssueButton.addEventListener('click', () => {
             const issue = issueInput.value.trim();
             if (issue) {
@@ -277,7 +270,6 @@
                 // Set and show the results
                 issueText.textContent = currentIssue;
                 extractedIssue.classList.remove('hidden');
-                goToAriumButton.classList.remove('hidden'); // ✨ NEW: Show Arium button
                 searchButton.classList.remove('hidden');
                 getStepsButton.classList.remove('hidden');
                 resetButton.classList.remove('hidden');
@@ -291,7 +283,7 @@
             }
         });
 
-        // 6. Get Repair Steps (New Gemini Feature)
+        // ✨ 6. Get Repair Steps (New Gemini Feature)
         getStepsButton.addEventListener('click', async () => {
             if (!currentIssue) return;
 
@@ -309,6 +301,7 @@
             } catch (error) {
                 console.error('Error generating repair steps:', error);
                 
+                // ✨ Improved user-facing error messages
                 let friendlyMessage = 'Error: Could not generate repair steps.';
                 if (error.message.includes('SAFETY') || error.message.includes('blocked')) {
                     friendlyMessage = 'Error: The request was blocked for safety reasons (e.g., advice may be dangerous).';
@@ -384,7 +377,7 @@
             }
         }
 
-        // --- (Original) New Gemini API Call Function (Text) ---
+        // --- ✨ New Gemini API Call Function (Text) ---
         async function callGeminiForSteps(issue, retryCount = 0) {
             const apiKey = "AIzaSyCV7QU78lY1QmoG5DqsRoOGIBvgi20BfAM"; // Leave as-is, will be handled by the environment
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
@@ -392,12 +385,14 @@
             const prompt = `Act as a helpful DIY repair assistant. For the issue "${issue}", provide a concise, general, step-by-step list of diagnostic steps and safety precautions. Start with safety warnings. Use markdown for formatting. Keep it general and focused on diagnosis.`;
 
             const payload = {
+                // ✨ Fix: Added role: "user" to match the image API call structure
                 contents: [
                     {
                         role: "user",
                         parts: [{ text: prompt }]
                     }
                 ],
+                // No image, this is a text-only call
             };
 
             try {
@@ -418,11 +413,14 @@
 
                 const result = await response.json();
                 
+                // ✨ Fix: More robust response validation
+                // Check for a top-level safety block
                 if (result.promptFeedback && result.promptFeedback.blockReason) {
                     console.warn('API call blocked (promptFeedback):', result.promptFeedback.blockReason);
                     throw new Error(`Request blocked: ${result.promptFeedback.blockReason}`);
                 }
                 
+                // Use optional chaining to safely check for the text
                 const candidate = result.candidates?.[0];
                 const generatedText = candidate?.content?.parts?.[0]?.text;
 
@@ -430,11 +428,13 @@
                     return generatedText;
                 }
                 
+                // If we have a candidate but no text, check its finishReason
                 if (candidate && candidate.finishReason) {
                     console.warn('API call finished with reason:', candidate.finishReason);
                     throw new Error(`API Error: ${candidate.finishReason}`);
                 }
 
+                // If we get here, the structure is just weird
                 console.warn('Unexpected API response structure:', result);
                 throw new Error('Could not parse text from API response.');
             } catch (error) {
@@ -443,7 +443,7 @@
             }
         }
 
-        // --- (Original) New Helper Function to Format Markdown ---
+        // --- ✨ New Helper Function to Format Markdown ---
         function formatRepairSteps(text) {
             // Split by lines and remove empty ones
             const lines = text.split('\n').filter(line => line.trim() !== '');
@@ -490,3 +490,8 @@
     </script>
 </body>
 </html>
+
+
+
+
+
