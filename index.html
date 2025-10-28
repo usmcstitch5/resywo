@@ -6,13 +6,14 @@
     <title>Work Order Repair Helper</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* ... (styles are unchanged) ... */
+        /* Custom styles */
         body {
             font-family: 'Inter', sans-serif;
         }
+        /* Simple loading spinner */
         .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3498db;
+            border: 4px solid #f3f3f3; /* Light grey */
+            border-top: 4px solid #3498db; /* Blue */
             border-radius: 50%;
             width: 40px;
             height: 40px;
@@ -22,6 +23,7 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        /* Hide video and canvas initially */
         video, canvas {
             display: none;
             width: 100%;
@@ -33,7 +35,6 @@
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
 
     <div class="bg-white p-6 sm:p-8 rounded-lg shadow-xl w-full max-w-md mx-4">
-        
         <h1 class="text-2xl sm:text-3xl font-bold text-center text-gray-800 mb-4">
             Work Order Helper
         </h1>
@@ -44,10 +45,14 @@
         <div class="space-y-4">
             <div id="cameraButtonArea">
                 <button id="startButton" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-all duration-200 flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
                     Start Camera
                 </button>
             </div>
+
             <div id="textInputArea" class="space-y-2 pt-2">
                 <p class="text-center text-gray-500 text-sm">- OR -</p>
                 <label for="issueInput" class="text-sm font-medium text-gray-700">Type the issue below:</label>
@@ -56,21 +61,24 @@
                     Submit Issue
                 </button>
             </div>
+
             <div class="relative">
                 <video id="video" playsinline></video>
                 <canvas id="canvas" class="hidden"></canvas>
             </div>
+
             <button id="captureButton" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-all duration-200 hidden">
                 Take Picture
             </button>
+            
             <button id="recognizeButton" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-all duration-200 hidden">
                 Recognize Issue
             </button>
+            
             <button id="resetButton" class="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all duration-200 hidden">
                 Retake
             </button>
         </div>
-
 
         <div id="results" class="mt-6 text-center">
             <div id="loading" class="hidden flex flex-col items-center justify-center">
@@ -84,7 +92,7 @@
             </div>
 
             <button id="goToAriumButton" class="w-full bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-all duration-200 hidden">
-                📸 View Common Fixes
+                📸 View Common Fixes (with Pictures)
             </button>
 
             <button id="searchButton" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-all duration-200 hidden mt-2">
@@ -109,17 +117,6 @@
         </div>
     </div>
 
-    <div id="fixesModal" class="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center p-4 border-b sticky top-0 bg-white">
-                <h2 class="text-xl font-bold">Common Fixes</h2>
-                <button id="closeModalButton" class="text-gray-500 hover:text-gray-800 text-3xl">&times;</button>
-            </div>
-            <div id="fixesContent" class="p-6 space-y-6">
-                </div>
-        </div>
-    </div>
-
     <script>
         // DOM Elements
         const startButton = document.getElementById('startButton');
@@ -128,23 +125,22 @@
         const resetButton = document.getElementById('resetButton');
         const searchButton = document.getElementById('searchButton');
         const getStepsButton = document.getElementById('getStepsButton');
+        // ✨ NEW ARIUM BUTTON (Added)
         const goToAriumButton = document.getElementById('goToAriumButton');
-        
-        // ✨ NEW: Modal DOM Elements
-        const fixesModal = document.getElementById('fixesModal');
-        const closeModalButton = document.getElementById('closeModalButton');
-        const fixesContent = document.getElementById('fixesContent');
 
+        // (Original) New DOM Elements
         const issueInput = document.getElementById('issueInput');
         const submitIssueButton = document.getElementById('submitIssueButton');
-        // ... (other DOM elements) ...
         const cameraButtonArea = document.getElementById('cameraButtonArea');
         const textInputArea = document.getElementById('textInputArea');
+        
         const stepsLoading = document.getElementById('stepsLoading');
         const repairStepsWrapper = document.getElementById('repairStepsWrapper');
         const repairSteps = document.getElementById('repairSteps');
+        
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
+        
         const loading = document.getElementById('loading');
         const message = document.getElementById('message');
         const extractedIssue = document.getElementById('extractedIssue');
@@ -154,62 +150,10 @@
         let stream;
         let currentIssue = '';
 
-        // ✨ ===================================================================
-        // ✨ NEW: COMMON FIXES DATABASE
-        // ✨ ===================================================================
-        // ✨ INSTRUCTION:
-        // ✨ 1. Add keywords (lowercase) from the Arium site as keys (e.g., "ac", "freezer", "disposal").
-        // ✨ 2. For each key, add an array [] of fix objects {}.
-        // ✨ 3. For each fix, provide a title, description, and a *public URL* for the image.
-        // ✨ IMPORTANT: Image URLs *must* be hosted online (e.g., on your own web server,
-        // ✨ or a public image host like imgur). You cannot use a local file path.
-        // ✨ The URLs from ariumliving.com might work if they are hotlink-protected.
-        // ✨ Example: https://www.ariumliving.com/images/default-source/maintenace-ss/ac-not-working.jpg?sfvrsn=319b2246_2
-
-        const commonFixes = {
-            "default": [
-                {
-                    title: "Check Your Breakers",
-                    description: "Many issues are caused by a tripped breaker. Find your circuit breaker box (often in a closet, garage, or utility room) and check if any switches are in the 'OFF' or a middle position. Flip them fully 'OFF' and then back 'ON'.",
-                    image: "https://i.imgur.com/gA3lH2w.jpeg" // Example image
-                }
-            ],
-            "freezer": [
-                {
-                    title: "Check Freezer Temperature Dial",
-                    description: "Make sure the dial inside the freezer is set to a cold setting (often labeled 'Colder' or a number). It may have been bumped accidentally.",
-                    image: "https://i.imgur.com/8aJ3fQG.jpeg" // Example image
-                },
-                {
-                    title: "Check Door Seal",
-                    description: "Wipe down the rubber seal (gasket) around the door with warm, soapy water. Ensure it's clean and making a tight connection. A gap can let warm air in.",
-                    image: "https://i.imgur.com/3fL9bTf.jpeg" // Example image
-                }
-            ],
-            "disposal": [
-                 {
-                    title: "Press the Reset Button",
-                    description: "Look for a small red or black button on the bottom of the disposal unit under the sink. If it has popped out, press it firmly to reset it.",
-                    image: "https://i.imgur.com/7YjXm4D.jpeg" // Example image
-                },
-                {
-                    title: "Use the Allen Wrench",
-                    description: "If it's jammed (just hums), turn off the power. Look for a hex-shaped hole in the very bottom center. Use the Allen wrench that came with it (or a standard one) to manually turn the blades back and forth to free the jam.",
-                    image: "https://i.imgur.com/1CgA1bE.jpeg" // Example image
-                }
-            ],
-            // ✨ ADD MORE ENTRIES HERE, e.g.:
-            // "ac": [ ... ],
-            // "outlet": [ ... ],
-            // "dryer": [ ... ]
-        };
-
-        // --- (Event Listeners) ---
-
-        // 1. Start Camera (unchanged)
+        // 1. Start Camera
         startButton.addEventListener('click', async () => {
             message.textContent = '';
-            textInputArea.classList.add('hidden');
+            textInputArea.classList.add('hidden'); // ✨ Hide text input area
             try {
                 stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { facingMode: 'environment' } 
@@ -219,7 +163,7 @@
                 video.play();
                 
                 startButton.classList.add('hidden');
-                cameraButtonArea.classList.add('hidden');
+                cameraButtonArea.classList.add('hidden'); // ✨ Hide camera button area
                 captureButton.classList.remove('hidden');
                 resetButton.classList.remove('hidden');
             } catch (err) {
@@ -228,40 +172,46 @@
             }
         });
 
-        // 2. Capture Picture (unchanged)
+        // 2. Capture Picture
         captureButton.addEventListener('click', () => {
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
             
+            // Show canvas, hide video
             canvas.style.display = 'block';
             video.style.display = 'none';
             
+            // Stop the camera stream
             if (stream) {
                 stream.getTracks().forEach(track => track.stop());
             }
             
+            // Update buttons
             captureButton.classList.add('hidden');
             recognizeButton.classList.remove('hidden');
         });
         
-        // 3. Reset/Retake (unchanged)
+        // 3. Reset/Retake
         resetButton.addEventListener('click', () => {
+             // Stop the camera stream if it's running
             if (stream) {
                 stream.getTracks().forEach(track => track.stop());
             }
             
+            // Hide canvas and results
             video.style.display = 'none';
             canvas.style.display = 'none';
             extractedIssue.classList.add('hidden');
             searchButton.classList.add('hidden');
             getStepsButton.classList.add('hidden'); 
-            goToAriumButton.classList.add('hidden'); // Hide Arium button
+            goToAriumButton.classList.add('hidden'); // ✨ NEW: Hide Arium button
             repairStepsWrapper.classList.add('hidden'); 
             repairSteps.innerHTML = ''; 
             recognizeButton.classList.add('hidden');
             resetButton.classList.add('hidden');
             
+            // Show start button and text input
             startButton.classList.remove('hidden');
             cameraButtonArea.classList.remove('hidden'); 
             textInputArea.classList.remove('hidden'); 
@@ -270,7 +220,7 @@
             currentIssue = '';
         });
 
-        // 4. Recognize Text (unchanged)
+        // 4. Recognize Text (Call Gemini API)
         recognizeButton.addEventListener('click', async () => {
             const base64ImageData = canvas.toDataURL('image/png').split(',')[1];
             if (!base64ImageData) {
@@ -285,14 +235,14 @@
 
             try {
                 const generatedText = await callGeminiAPI(base64ImageData);
-                currentIssue = generatedText.trim().replace(/["']/g, ""); 
+                currentIssue = generatedText.trim().replace(/["']/g, ""); // Clean up quotes
                 
                 issueText.textContent = currentIssue;
                 extractedIssue.classList.remove('hidden');
-                goToAriumButton.classList.remove('hidden'); // Show Arium button
+                goToAriumButton.classList.remove('hidden'); // ✨ NEW: Show Arium button
                 searchButton.classList.remove('hidden');
                 getStepsButton.classList.remove('hidden'); 
-                resetButton.classList.remove('hidden'); 
+                resetButton.classList.remove('hidden'); // Show reset button again
 
             } catch (error) {
                 console.error('Error during text recognition:', error);
@@ -303,7 +253,7 @@
             }
         });
 
-        // 5. Search on YouTube (unchanged)
+        // 5. Search on YouTube
         searchButton.addEventListener('click', () => {
             if (currentIssue) {
                 const query = encodeURIComponent(currentIssue);
@@ -312,32 +262,231 @@
             }
         });
 
-        // ✨ 6. NEW: Show Common Fixes Modal (Modified)
+        // ✨ NEW ARIUM BUTTON CLICK HANDLER (Added)
         goToAriumButton.addEventListener('click', () => {
-            showCommonFixes(currentIssue);
+            const url = 'https://ariumliving.com/maintenance-issues';
+            window.open(url, '_blank');
         });
 
-        // ✨ 7. NEW: Close Modal Button
-        closeModalButton.addEventListener('click', () => {
-            fixesModal.classList.add('hidden');
-        });
-
-        // 8. Submit Text Issue (unchanged)
+        // (Original) Event Listener for Text Input
         submitIssueButton.addEventListener('click', () => {
             const issue = issueInput.value.trim();
             if (issue) {
                 currentIssue = issue;
                 
+                // Set and show the results
                 issueText.textContent = currentIssue;
                 extractedIssue.classList.remove('hidden');
-                goToAriumButton.classList.remove('hidden'); // Show Arium button
+                goToAriumButton.classList.remove('hidden'); // ✨ NEW: Show Arium button
                 searchButton.classList.remove('hidden');
                 getStepsButton.classList.remove('hidden');
                 resetButton.classList.remove('hidden');
                 
+                // Hide the inputs
                 cameraButtonArea.classList.add('hidden');
                 textInputArea.classList.add('hidden');
                 message.textContent = '';
             } else {
                 message.textContent = 'Please enter an issue description.';
             }
+        });
+
+        // 6. Get Repair Steps (New Gemini Feature)
+        getStepsButton.addEventListener('click', async () => {
+            if (!currentIssue) return;
+
+            stepsLoading.classList.remove('hidden');
+            repairStepsWrapper.classList.add('hidden');
+            repairSteps.innerHTML = '';
+            getStepsButton.disabled = true; // Disable button during call
+            getStepsButton.classList.add('opacity-50');
+            message.textContent = ''; // Clear old messages
+
+            try {
+                const stepsText = await callGeminiForSteps(currentIssue);
+                repairSteps.innerHTML = formatRepairSteps(stepsText);
+                repairStepsWrapper.classList.remove('hidden');
+            } catch (error) {
+                console.error('Error generating repair steps:', error);
+                
+                let friendlyMessage = 'Error: Could not generate repair steps.';
+                if (error.message.includes('SAFETY') || error.message.includes('blocked')) {
+                    friendlyMessage = 'Error: The request was blocked for safety reasons (e.g., advice may be dangerous).';
+                } else if (error.message.includes('API Error:')) {
+                    friendlyMessage = `Error: The API returned an issue. (${error.message})`;
+                } else if (error.message.includes('parse text')) {
+                    friendlyMessage = 'Error: The API returned an unexpected response.';
+                }
+                
+                message.textContent = friendlyMessage;
+            } finally {
+                stepsLoading.classList.add('hidden');
+                getStepsButton.disabled = false; // Re-enable button
+                getStepsButton.classList.remove('opacity-50');
+            }
+        });
+
+        // --- Gemini API Call Function (Image) ---
+        async function callGeminiAPI(base64ImageData, retryCount = 0) {
+            const apiKey = "AIzaSyCV7QU78lY1QmoG5DqsRoOGIBvgi20BfAM"; // Leave as-is, will be handled by the environment
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+            const prompt = "Analyze this image of a work order. Extract only the main issue or problem description (e.g., 'freezer not cold', 'dryer not heating', 'ice maker broken'). Respond with only the short problem description text and nothing else.";
+
+            const payload = {
+                contents: [
+                    {
+                        role: "user",
+                        parts: [
+                            { text: prompt },
+                            {
+                                inlineData: {
+                                    mimeType: "image/png",
+                                    data: base64ImageData
+                                }
+                            }
+                        ]
+                    }
+                ],
+            };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    // Handle rate limiting and other errors
+                    if (response.status === 429 && retryCount < 3) {
+                        const delay = Math.pow(2, retryCount) * 1000 + Math.random() * 1000;
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        return callGeminiAPI(base64ImageData, retryCount + 1);
+                    }
+                    throw new Error(`API Error: ${response.status} ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    return result.candidates[0].content.parts[0].text;
+                } else {
+                    // Handle cases where the response structure is unexpected
+                    console.warn('Unexpected API response structure:', result);
+                    throw new Error('Could not parse text from API response.');
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                throw error; // Re-throw to be caught by the event listener
+            }
+        }
+
+        // --- (Original) New Gemini API Call Function (Text) ---
+        async function callGeminiForSteps(issue, retryCount = 0) {
+            const apiKey = "AIzaSyCV7QU78lY1QmoG5DqsRoOGIBvgi20BfAM"; // Leave as-is, will be handled by the environment
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+            const prompt = `Act as a helpful DIY repair assistant. For the issue "${issue}", provide a concise, general, step-by-step list of diagnostic steps and safety precautions. Start with safety warnings. Use markdown for formatting. Keep it general and focused on diagnosis.`;
+
+            const payload = {
+                contents: [
+                    {
+                        role: "user",
+                        parts: [{ text: prompt }]
+                    }
+                ],
+            };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    if (response.status === 429 && retryCount < 3) {
+                        const delay = Math.pow(2, retryCount) * 1000 + Math.random() * 1000;
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        return callGeminiForSteps(issue, retryCount + 1);
+                    }
+                    throw new Error(`API Error: ${response.status} ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.promptFeedback && result.promptFeedback.blockReason) {
+                    console.warn('API call blocked (promptFeedback):', result.promptFeedback.blockReason);
+                    throw new Error(`Request blocked: ${result.promptFeedback.blockReason}`);
+                }
+                
+                const candidate = result.candidates?.[0];
+                const generatedText = candidate?.content?.parts?.[0]?.text;
+
+                if (generatedText) {
+                    return generatedText;
+                }
+                
+                if (candidate && candidate.finishReason) {
+                    console.warn('API call finished with reason:', candidate.finishReason);
+                    throw new Error(`API Error: ${candidate.finishReason}`);
+                }
+
+                console.warn('Unexpected API response structure:', result);
+                throw new Error('Could not parse text from API response.');
+            } catch (error) {
+                console.error('Fetch error:', error);
+                throw error;
+            }
+        }
+
+        // --- (Original) New Helper Function to Format Markdown ---
+        function formatRepairSteps(text) {
+            // Split by lines and remove empty ones
+            const lines = text.split('\n').filter(line => line.trim() !== '');
+            let html = '';
+            let listType = null; // 'ul', 'ol'
+
+            for (const line of lines) {
+                const ulMatch = line.match(/^\s*[\*|-]\s+(.*)/);
+                const olMatch = line.match(/^\s*\d+\.\s+(.*)/);
+
+                if (ulMatch) { // Unordered list item
+                    if (listType !== 'ul') {
+                        if (listType) html += (listType === 'ul' ? '</ul>' : '</ol>'); // Close previous list
+                        html += '<ul class="list-disc list-inside text-left mt-2">';
+                        listType = 'ul';
+                    }
+                    html += `<li class="mb-1">${ulMatch[1]}</li>`;
+                } else if (olMatch) { // Ordered list item
+                    if (listType !== 'ol') {
+                        if (listType) html += (listType === 'ul' ? '</ul>' : '</ol>'); // Close previous list
+                        html += '<ol class="list-decimal list-inside text-left mt-2">';
+                        listType = 'ol';
+                    }
+                    html += `<li class="mb-1">${olMatch[1]}</li>`;
+                } else { // Regular text line
+                    if (listType) {
+                        html += (listType === 'ul' ? '</ul>' : '</ol>'); // Close list
+                        listType = null;
+                    }
+                    // Treat lines ending in ':' or all-caps as headings
+                    if (line.endsWith(':') || (line === line.toUpperCase() && line.length > 3)) {
+                            html += `<p class="font-semibold text-left mt-3 mb-1">${line}</p>`;
+                    } else {
+                            html += `<p class="text-left mt-2">${line}</p>`;
+                    }
+                }
+            }
+            if (listType) { // Close any open list at the end
+                html += (listType === 'ul' ? '</ul>' : '</ol>');
+            }
+            return html;
+        }
+
+    </script>
+</body>
+</html>
