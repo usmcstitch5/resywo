@@ -461,6 +461,7 @@ Use clear markdown formatting with headers and bullet points. Keep it practical 
             for (const line of lines) {
                 const ulMatch = line.match(/^\s*[\*|-]\s+(.*)/);
                 const olMatch = line.match(/^\s*\d+\.\s+(.*)/);
+                const headerMatch = line.match(/^\s*(#{1,3})\s+(.+)$/); // Match markdown headers
 
                 if (ulMatch) { // Unordered list item
                     if (listType !== 'ul') {
@@ -468,24 +469,36 @@ Use clear markdown formatting with headers and bullet points. Keep it practical 
                         html += '<ul class="list-disc list-inside text-left mt-2">';
                         listType = 'ul';
                     }
-                    html += `<li class="mb-1">${ulMatch[1]}</li>`;
+                    const content = formatInlineMarkdown(ulMatch[1]);
+                    html += `<li class="mb-1">${content}</li>`;
                 } else if (olMatch) { // Ordered list item
                     if (listType !== 'ol') {
                         if (listType) html += (listType === 'ul' ? '</ul>' : '</ol>'); // Close previous list
                         html += '<ol class="list-decimal list-inside text-left mt-2">';
                         listType = 'ol';
                     }
-                    html += `<li class="mb-1">${olMatch[1]}</li>`;
+                    const content = formatInlineMarkdown(olMatch[1]);
+                    html += `<li class="mb-1">${content}</li>`;
+                } else if (headerMatch) { // Markdown header
+                    if (listType) {
+                        html += (listType === 'ul' ? '</ul>' : '</ol>'); // Close list
+                        listType = null;
+                    }
+                    const level = headerMatch[1].length;
+                    const content = formatInlineMarkdown(headerMatch[2]);
+                    const sizeClass = level === 1 ? 'text-lg' : level === 2 ? 'text-base' : 'text-sm';
+                    html += `<p class="font-bold ${sizeClass} text-left mt-4 mb-2">${content}</p>`;
                 } else { // Regular text line
                     if (listType) {
                         html += (listType === 'ul' ? '</ul>' : '</ol>'); // Close list
                         listType = null;
                     }
+                    const content = formatInlineMarkdown(line);
                     // Treat lines ending in ':' or all-caps as headings
                     if (line.endsWith(':') || (line === line.toUpperCase() && line.length > 3)) {
-                            html += `<p class="font-semibold text-left mt-3 mb-1">${line}</p>`;
+                            html += `<p class="font-semibold text-left mt-3 mb-1">${content}</p>`;
                     } else {
-                            html += `<p class="text-left mt-2">${line}</p>`;
+                            html += `<p class="text-left mt-2">${content}</p>`;
                     }
                 }
             }
@@ -493,6 +506,15 @@ Use clear markdown formatting with headers and bullet points. Keep it practical 
                 html += (listType === 'ul' ? '</ul>' : '</ol>');
             }
             return html;
+        }
+
+        // Helper function to format inline markdown (bold, italic)
+        function formatInlineMarkdown(text) {
+            // Handle **bold** text
+            text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            // Handle *italic* text
+            text = text.replace(/\*(.+?)\*/g, '<em>$1</em>');
+            return text;
         }
 
     </script>
