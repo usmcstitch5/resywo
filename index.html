@@ -382,7 +382,15 @@
             const apiKey = ""; // Leave as-is, will be handled by the environment
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
 
-            const prompt = `Act as a helpful DIY repair assistant. For the issue "${issue}", provide a concise, general, step-by-step list of diagnostic steps and safety precautions. Start with safety warnings. Use markdown for formatting. Keep it general and focused on diagnosis.`;
+            const prompt = `Act as a helpful DIY repair assistant. For the issue "${issue}", provide:
+
+1. **SAFETY WARNINGS FIRST**: List critical safety precautions specific to this repair
+2. **General Diagnostic Steps**: Step-by-step troubleshooting to identify the root cause
+3. **Common Causes**: What typically causes this issue
+4. **Repair Advice**: General guidance on addressing this specific problem
+5. **When to Call a Professional**: Situations that require expert help
+
+Use clear markdown formatting with headers and bullet points. Keep it practical and focused on helping someone diagnose and understand the issue safely.`;
 
             const payload = {
                 // ✨ Fix: Added role: "user" to match the image API call structure
