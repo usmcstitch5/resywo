@@ -510,20 +510,13 @@ Use clear markdown formatting with headers and bullet points. Keep it practical 
 
         // Helper function to format inline markdown (bold, italic)
         function formatInlineMarkdown(text) {
-            // First, escape HTML special characters to prevent XSS
-            text = escapeHtml(text);
+            // Process markdown formatting
             // Handle **bold** text first (before italic to avoid conflicts)
             text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
             // Handle *italic* text (after bold to avoid matching bold patterns)
             text = text.replace(/\*(.+?)\*/g, '<em>$1</em>');
+            
             return text;
-        }
-
-        // Helper function to escape HTML special characters
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
         }
 
     </script>
