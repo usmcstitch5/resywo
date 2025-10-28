@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-R-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Work Order Repair Helper</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Simple loading spinner */
+        .loader {
+            border: 4px solid #f3f3f3; /* Light grey */
+            border-top: 4px solid #3498db; /* Blue */
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* Hide video and canvas initially */
+        video, canvas {
+            display: none;
+            width: 100%;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+    <div class="bg-white p-6 sm:p-8 rounded-lg shadow-xl w-full max-w-md mx-4">
+        <h1 class="text-2xl sm:text-3xl font-bold text-center text-gray-800 mb-4">
+            Work Order Helper
+        </h1>
+        <p class="text-center text-gray-600 mb-6">
+            Take a picture of your work order to find a repair video.
+        </p>
+
+        <!-- Main controls -->
+        <div class="space-y-4">
+            <!-- Camera Option -->
+            <div id="cameraButtonArea">
+                <button id="startButton" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-all duration-200 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    Start Camera
+                </button>
+            </div>
+
+            <!-- ✨ New Text Input Option -->
+            <div id="textInputArea" class="space-y-2 pt-2">
+                <p class="text-center text-gray-500 text-sm">- OR -</p>
+                <label for="issueInput" class="text-sm font-medium text-gray-700">Type the issue below:</label>
+                <input type="text" id="issueInput" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., Freezer is not cold">
+                <button id="submitIssueButton" class="w-full bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all duration-200">
+                    Submit Issue
+                </button>
+            </div>
+
+            <!-- Video and Canvas containers -->
+            <div class="relative">
+                <video id="video" playsinline></video>
+                <canvas id="canvas" class="hidden"></canvas>
+            </div>
+
+            <button id="captureButton" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-all duration-200 hidden">
+                Take Picture
+            </button>
+            
+            <button id="recognizeButton" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-all duration-200 hidden">
+                Recognize Issue
+            </button>
+            
+            <button id="resetButton" class="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all duration-200 hidden">
+                Retake
+            </button>
+        </div>
+
+        <!-- Results area -->
+        <div id="results" class="mt-6 text-center">
+            <div id="loading" class="hidden flex flex-col items-center justify-center">
+                <div class="loader"></div>
+                <p class="text-gray-600 mt-3">Analyzing image...</p>
+            </div>
+            <div id="message" class="text-gray-700"></div>
+            <div id="extractedIssue" class="my-4 p-4 bg-gray-50 border border-gray-200 rounded-lg hidden">
+                <h3 class="font-semibold text-gray-700 mb-2">Identified Issue:</h3>
+                <p id="issueText" class="text-lg text-indigo-700 font-medium"></p>
+            </div>
+            <button id="searchButton" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-all duration-200 hidden">
+                Find Repair Video on YouTube
+            </button>
+            <!-- ✨ New Gemini Feature Button -->
+            <button id="getStepsButton" class="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-all duration-200 hidden mt-2">
+                ✨ Get General Repair Steps
+            </button>
+
+            <!-- ✨ New Gemini Feature Results Area -->
+            <div id="stepsContainer" class="mt-4 text-center">
+                <div id="stepsLoading" class="hidden flex flex-col items-center justify-center">
+                    <!-- Purple spinner to differentiate -->
+                    <div class="loader" style="border-top-color: #8B5CF6;"></div> 
+                    <p class="text-gray-600 mt-3">Generating repair steps...</p>
+                </div>
+                <div id="repairStepsWrapper" class="hidden">
+                    <h3 class="font-semibold text-gray-700 mt-4 mb-2">General Repair Steps:</h3>
+                    <div id="repairSteps" class="my-4 p-4 bg-gray-50 border border-gray-200 rounded-lg text-left text-sm">
+                        <!-- Content will be injected here by the new Gemini call -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const startButton = document.getElementById('startButton');
+        const captureButton = document.getElementById('captureButton');
+        const recognizeButton = document.getElementById('recognizeButton');
+        const resetButton = document.getElementById('resetButton');
+        const searchButton = document.getElementById('searchButton');
+        // ✨ New DOM Elements
+        const getStepsButton = document.getElementById('getStepsButton');
+        const issueInput = document.getElementById('issueInput');
+        const submitIssueButton = document.getElementById('submitIssueButton');
+        const cameraButtonArea = document.getElementById('cameraButtonArea');
+        const textInputArea = document.getElementById('textInputArea');
+        
+        const stepsLoading = document.getElementById('stepsLoading');
+        const repairStepsWrapper = document.getElementById('repairStepsWrapper');
+        const repairSteps = document.getElementById('repairSteps');
+        
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        
+        const loading = document.getElementById('loading');
+        const message = document.getElementById('message');
+        const extractedIssue = document.getElementById('extractedIssue');
+        const issueText = document.getElementById('issueText');
+        
+        const context = canvas.getContext('2d');
+        let stream;
+        let currentIssue = '';
+
+        // 1. Start Camera
+        startButton.addEventListener('click', async () => {
+            message.textContent = '';
+            textInputArea.classList.add('hidden'); // ✨ Hide text input area
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment' } 
+                });
+                video.srcObject = stream;
+                video.style.display = 'block';
+                video.play();
+                
+                startButton.classList.add('hidden');
+                cameraButtonArea.classList.add('hidden'); // ✨ Hide camera button area
+                captureButton.classList.remove('hidden');
+                resetButton.classList.remove('hidden');
+            } catch (err) {
+                console.error("Error accessing camera:", err);
+                message.textContent = 'Error: Could not access camera. Please check permissions.';
+            }
+        });
+
+        // 2. Capture Picture
+        captureButton.addEventListener('click', () => {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Show canvas, hide video
+            canvas.style.display = 'block';
+            video.style.display = 'none';
+            
+            // Stop the camera stream
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            
+            // Update buttons
+            captureButton.classList.add('hidden');
+            recognizeButton.classList.remove('hidden');
+        });
+        
+        // 3. Reset/Retake
+        resetButton.addEventListener('click', () => {
+             // Stop the camera stream if it's running
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            
+            // Hide canvas and results
+            video.style.display = 'none';
+            canvas.style.display = 'none';
+            extractedIssue.classList.add('hidden');
+            searchButton.classList.add('hidden');
+            getStepsButton.classList.add('hidden'); // ✨ Hide new button
+            repairStepsWrapper.classList.add('hidden'); // ✨ Hide new results
+            repairSteps.innerHTML = ''; // ✨ Clear new results
+            recognizeButton.classList.add('hidden');
+            resetButton.classList.add('hidden');
+            
+            // Show start button and text input
+            startButton.classList.remove('hidden');
+            cameraButtonArea.classList.remove('hidden'); // ✨ Show camera button area
+            textInputArea.classList.remove('hidden'); // ✨ Show text input area
+            issueInput.value = ''; // ✨ Clear text input
+            message.textContent = '';
+            currentIssue = '';
+        });
+
+        // 4. Recognize Text (Call Gemini API)
+        recognizeButton.addEventListener('click', async () => {
+            const base64ImageData = canvas.toDataURL('image/png').split(',')[1];
+            if (!base64ImageData) {
+                message.textContent = 'Error: Could not capture image.';
+                return;
+            }
+
+            loading.classList.remove('hidden');
+            recognizeButton.classList.add('hidden');
+            resetButton.classList.add('hidden');
+            message.textContent = '';
+
+            try {
+                const generatedText = await callGeminiAPI(base64ImageData);
+                currentIssue = generatedText.trim().replace(/["']/g, ""); // Clean up quotes
+                
+                issueText.textContent = currentIssue;
+                extractedIssue.classList.remove('hidden');
+                searchButton.classList.remove('hidden');
+                getStepsButton.classList.remove('hidden'); // ✨ Show new button
+                resetButton.classList.remove('hidden'); // Show reset button again
+
+            } catch (error) {
+                console.error('Error during text recognition:', error);
+                message.textContent = 'Error: Could not recognize text. Please try again.';
+                resetButton.classList.remove('hidden');
+            } finally {
+                loading.classList.add('hidden');
+            }
+        });
+
+        // 5. Search on YouTube
+        searchButton.addEventListener('click', () => {
+            if (currentIssue) {
+                const query = encodeURIComponent(currentIssue);
+                const url = `https://www.youtube.com/user/RepairClinic/search?query=${query}`;
+                window.open(url, '_blank');
+            }
+        });
+
+        // ✨ New Event Listener for Text Input
+        submitIssueButton.addEventListener('click', () => {
+            const issue = issueInput.value.trim();
+            if (issue) {
+                currentIssue = issue;
+                
+                // Set and show the results
+                issueText.textContent = currentIssue;
+                extractedIssue.classList.remove('hidden');
+                searchButton.classList.remove('hidden');
+                getStepsButton.classList.remove('hidden');
+                resetButton.classList.remove('hidden');
+                
+                // Hide the inputs
+                cameraButtonArea.classList.add('hidden');
+                textInputArea.classList.add('hidden');
+                message.textContent = '';
+            } else {
+                message.textContent = 'Please enter an issue description.';
+            }
+        });
+
+        // ✨ 6. Get Repair Steps (New Gemini Feature)
+        getStepsButton.addEventListener('click', async () => {
+            if (!currentIssue) return;
+
+            stepsLoading.classList.remove('hidden');
+            repairStepsWrapper.classList.add('hidden');
+            repairSteps.innerHTML = '';
+            getStepsButton.disabled = true; // Disable button during call
+            getStepsButton.classList.add('opacity-50');
+            message.textContent = ''; // Clear old messages
+
+            try {
+                const stepsText = await callGeminiForSteps(currentIssue);
+                repairSteps.innerHTML = formatRepairSteps(stepsText);
+                repairStepsWrapper.classList.remove('hidden');
+            } catch (error) {
+                console.error('Error generating repair steps:', error);
+                
+                // ✨ Improved user-facing error messages
+                let friendlyMessage = 'Error: Could not generate repair steps.';
+                if (error.message.includes('SAFETY') || error.message.includes('blocked')) {
+                    friendlyMessage = 'Error: The request was blocked for safety reasons (e.g., advice may be dangerous).';
+                } else if (error.message.includes('API Error:')) {
+                    friendlyMessage = `Error: The API returned an issue. (${error.message})`;
+                } else if (error.message.includes('parse text')) {
+                    friendlyMessage = 'Error: The API returned an unexpected response.';
+                }
+                
+                message.textContent = friendlyMessage;
+            } finally {
+                stepsLoading.classList.add('hidden');
+                getStepsButton.disabled = false; // Re-enable button
+                getStepsButton.classList.remove('opacity-50');
+            }
+        });
+
+        // --- Gemini API Call Function (Image) ---
+        async function callGeminiAPI(base64ImageData, retryCount = 0) {
+            const apiKey = ""; // Leave as-is, will be handled by the environment
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+            const prompt = "Analyze this image of a work order. Extract only the main issue or problem description (e.g., 'freezer not cold', 'dryer not heating', 'ice maker broken'). Respond with only the short problem description text and nothing else.";
+
+            const payload = {
+                contents: [
+                    {
+                        role: "user",
+                        parts: [
+                            { text: prompt },
+                            {
+                                inlineData: {
+                                    mimeType: "image/png",
+                                    data: base64ImageData
+                                }
+                            }
+                        ]
+                    }
+                ],
+            };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    // Handle rate limiting and other errors
+                    if (response.status === 429 && retryCount < 3) {
+                        const delay = Math.pow(2, retryCount) * 1000 + Math.random() * 1000;
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        return callGeminiAPI(base64ImageData, retryCount + 1);
+                    }
+                    throw new Error(`API Error: ${response.status} ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    return result.candidates[0].content.parts[0].text;
+                } else {
+                    // Handle cases where the response structure is unexpected
+                    console.warn('Unexpected API response structure:', result);
+                    throw new Error('Could not parse text from API response.');
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                throw error; // Re-throw to be caught by the event listener
+            }
+        }
+
+        // --- ✨ New Gemini API Call Function (Text) ---
+        async function callGeminiForSteps(issue, retryCount = 0) {
+            const apiKey = ""; // Leave as-is, will be handled by the environment
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+            const prompt = `Act as a helpful DIY repair assistant. For the issue "${issue}", provide a concise, general, step-by-step list of diagnostic steps and safety precautions. Start with safety warnings. Use markdown for formatting. Keep it general and focused on diagnosis.`;
+
+            const payload = {
+                // ✨ Fix: Added role: "user" to match the image API call structure
+                contents: [
+                    {
+                        role: "user",
+                        parts: [{ text: prompt }]
+                    }
+                ],
+                // No image, this is a text-only call
+            };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    if (response.status === 429 && retryCount < 3) {
+                        const delay = Math.pow(2, retryCount) * 1000 + Math.random() * 1000;
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        return callGeminiForSteps(issue, retryCount + 1);
+                    }
+                    throw new Error(`API Error: ${response.status} ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                
+                // ✨ Fix: More robust response validation
+                // Check for a top-level safety block
+                if (result.promptFeedback && result.promptFeedback.blockReason) {
+                    console.warn('API call blocked (promptFeedback):', result.promptFeedback.blockReason);
+                    throw new Error(`Request blocked: ${result.promptFeedback.blockReason}`);
+                }
+                
+                // Use optional chaining to safely check for the text
+                const candidate = result.candidates?.[0];
+                const generatedText = candidate?.content?.parts?.[0]?.text;
+
+                if (generatedText) {
+                    return generatedText;
+                }
+                
+                // If we have a candidate but no text, check its finishReason
+                if (candidate && candidate.finishReason) {
+                    console.warn('API call finished with reason:', candidate.finishReason);
+                    throw new Error(`API Error: ${candidate.finishReason}`);
+                }
+
+                // If we get here, the structure is just weird
+                console.warn('Unexpected API response structure:', result);
+                throw new Error('Could not parse text from API response.');
+            } catch (error) {
+                console.error('Fetch error:', error);
+                throw error;
+            }
+        }
+
+        // --- ✨ New Helper Function to Format Markdown ---
+        function formatRepairSteps(text) {
+            // Split by lines and remove empty ones
+            const lines = text.split('\n').filter(line => line.trim() !== '');
+            let html = '';
+            let listType = null; // 'ul', 'ol'
+
+            for (const line of lines) {
+                const ulMatch = line.match(/^\s*[\*|-]\s+(.*)/);
+                const olMatch = line.match(/^\s*\d+\.\s+(.*)/);
+
+                if (ulMatch) { // Unordered list item
+                    if (listType !== 'ul') {
+                        if (listType) html += (listType === 'ul' ? '</ul>' : '</ol>'); // Close previous list
+                        html += '<ul class="list-disc list-inside text-left mt-2">';
+                        listType = 'ul';
+                    }
+                    html += `<li class="mb-1">${ulMatch[1]}</li>`;
+                } else if (olMatch) { // Ordered list item
+                    if (listType !== 'ol') {
+                        if (listType) html += (listType === 'ul' ? '</ul>' : '</ol>'); // Close previous list
+                        html += '<ol class="list-decimal list-inside text-left mt-2">';
+                        listType = 'ol';
+                    }
+                    html += `<li class="mb-1">${olMatch[1]}</li>`;
+                } else { // Regular text line
+                    if (listType) {
+                        html += (listType === 'ul' ? '</ul>' : '</ol>'); // Close list
+                        listType = null;
+                    }
+                    // Treat lines ending in ':' or all-caps as headings
+                    if (line.endsWith(':') || (line === line.toUpperCase() && line.length > 3)) {
+                            html += `<p class="font-semibold text-left mt-3 mb-1">${line}</p>`;
+                    } else {
+                            html += `<p class="text-left mt-2">${line}</p>`;
+                    }
+                }
+            }
+            if (listType) { // Close any open list at the end
+                html += (listType === 'ul' ? '</ul>' : '</ol>');
+            }
+            return html;
+        }
+
+    </script>
+</body>
+</html>
+
+
+
+
+
