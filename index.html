@@ -510,13 +510,44 @@ Use clear markdown formatting with headers and bullet points. Keep it practical 
 
         // Helper function to format inline markdown (bold, italic)
         function formatInlineMarkdown(text) {
-            // Process markdown formatting
-            // Handle **bold** text first (before italic to avoid conflicts)
-            text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-            // Handle *italic* text (after bold to avoid matching bold patterns)
-            text = text.replace(/\*(.+?)\*/g, '<em>$1</em>');
+            // Use placeholder approach to safely handle markdown with HTML escaping
+            const placeholders = [];
+            let placeholderIndex = 0;
+            
+            // Replace **bold** with placeholders, escaping the content
+            text = text.replace(/\*\*(.+?)\*\*/g, (match, content) => {
+                const placeholder = `__PLACEHOLDER_${placeholderIndex++}__`;
+                placeholders.push('<strong>' + escapeHtml(content) + '</strong>');
+                return placeholder;
+            });
+            
+            // Replace *italic* with placeholders, escaping the content
+            text = text.replace(/\*(.+?)\*/g, (match, content) => {
+                const placeholder = `__PLACEHOLDER_${placeholderIndex++}__`;
+                placeholders.push('<em>' + escapeHtml(content) + '</em>');
+                return placeholder;
+            });
+            
+            // Escape any remaining HTML in the text
+            text = escapeHtml(text);
+            
+            // Restore placeholders with formatted HTML
+            placeholders.forEach((html, index) => {
+                text = text.replace(`__PLACEHOLDER_${index}__`, html);
+            });
             
             return text;
+        }
+
+        // Helper function to escape HTML special characters
+        function escapeHtml(text) {
+            return String(text).replace(/[&<>"']/g, char => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            }[char]));
         }
 
     </script>
