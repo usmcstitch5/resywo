@@ -322,7 +322,7 @@
         // --- Gemini API Call Function (Image) ---
         async function callGeminiAPI(base64ImageData, retryCount = 0) {
             const apiKey = "AIzaSyCV7QU78lY1QmoG5DqsRoOGIBvgi20BfAM"; // Leave as-is, will be handled by the environment
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
             const prompt = "Analyze this image of a work order. Extract only the main issue or problem description (e.g., 'freezer not cold', 'dryer not heating', 'ice maker broken'). Respond with only the short problem description text and nothing else.";
 
@@ -380,7 +380,7 @@
         // --- ✨ New Gemini API Call Function (Text) ---
         async function callGeminiForSteps(issue, retryCount = 0) {
             const apiKey = "AIzaSyCV7QU78lY1QmoG5DqsRoOGIBvgi20BfAM"; // Leave as-is, will be handled by the environment
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
             const prompt = `Act as a helpful DIY repair assistant. For the issue "${issue}", provide a concise, general, step-by-step list of diagnostic steps and safety precautions. Start with safety warnings. Use markdown for formatting. Keep it general and focused on diagnosis.`;
 
