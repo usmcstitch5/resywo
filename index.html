@@ -382,7 +382,15 @@
             const apiKey = "AIzaSyCV7QU78lY1QmoG5DqsRoOGIBvgi20BfAM"; // Leave as-is, will be handled by the environment
             const apiUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
-            const prompt = `Act as a helpful DIY repair assistant. For the issue "${issue}", provide a concise, general, step-by-step list of diagnostic steps and safety precautions. Start with safety warnings. Use markdown for formatting. Keep it general and focused on diagnosis.`;
+            const prompt = `Act as a helpful DIY repair assistant. For the issue "${issue}", provide:
+
+1. **SAFETY WARNINGS FIRST**: List critical safety precautions specific to this repair
+2. **General Diagnostic Steps**: Step-by-step troubleshooting to identify the root cause
+3. **Common Causes**: What typically causes this issue
+4. **Repair Advice**: General guidance on addressing this specific problem
+5. **When to Call a Professional**: Situations that require expert help
+
+Use clear markdown formatting with headers and bullet points. Keep it practical and focused on helping someone diagnose and understand the issue safely.`;
 
             const payload = {
                 // ✨ Fix: Added role: "user" to match the image API call structure
@@ -453,6 +461,7 @@
             for (const line of lines) {
                 const ulMatch = line.match(/^\s*[\*|-]\s+(.*)/);
                 const olMatch = line.match(/^\s*\d+\.\s+(.*)/);
+                const headerMatch = line.match(/^\s*(#{1,3})\s+(.+)$/); // Match markdown headers (h1-h3 only)
 
                 if (ulMatch) { // Unordered list item
                     if (listType !== 'ul') {
@@ -460,24 +469,36 @@
                         html += '<ul class="list-disc list-inside text-left mt-2">';
                         listType = 'ul';
                     }
-                    html += `<li class="mb-1">${ulMatch[1]}</li>`;
+                    const content = formatInlineMarkdown(ulMatch[1]);
+                    html += `<li class="mb-1">${content}</li>`;
                 } else if (olMatch) { // Ordered list item
                     if (listType !== 'ol') {
                         if (listType) html += (listType === 'ul' ? '</ul>' : '</ol>'); // Close previous list
                         html += '<ol class="list-decimal list-inside text-left mt-2">';
                         listType = 'ol';
                     }
-                    html += `<li class="mb-1">${olMatch[1]}</li>`;
+                    const content = formatInlineMarkdown(olMatch[1]);
+                    html += `<li class="mb-1">${content}</li>`;
+                } else if (headerMatch) { // Markdown header
+                    if (listType) {
+                        html += (listType === 'ul' ? '</ul>' : '</ol>'); // Close list
+                        listType = null;
+                    }
+                    const level = headerMatch[1].length;
+                    const content = formatInlineMarkdown(headerMatch[2]);
+                    const sizeClass = level === 1 ? 'text-lg' : level === 2 ? 'text-base' : 'text-sm';
+                    html += `<p class="font-bold ${sizeClass} text-left mt-4 mb-2">${content}</p>`;
                 } else { // Regular text line
                     if (listType) {
                         html += (listType === 'ul' ? '</ul>' : '</ol>'); // Close list
                         listType = null;
                     }
+                    const content = formatInlineMarkdown(line);
                     // Treat lines ending in ':' or all-caps as headings
                     if (line.endsWith(':') || (line === line.toUpperCase() && line.length > 3)) {
-                            html += `<p class="font-semibold text-left mt-3 mb-1">${line}</p>`;
+                            html += `<p class="font-semibold text-left mt-3 mb-1">${content}</p>`;
                     } else {
-                            html += `<p class="text-left mt-2">${line}</p>`;
+                            html += `<p class="text-left mt-2">${content}</p>`;
                     }
                 }
             }
@@ -485,6 +506,48 @@
                 html += (listType === 'ul' ? '</ul>' : '</ol>');
             }
             return html;
+        }
+
+        // Helper function to format inline markdown (bold, italic)
+        function formatInlineMarkdown(text) {
+            // Use placeholder approach to safely handle markdown with HTML escaping
+            const placeholders = [];
+            let placeholderIndex = 0;
+            
+            // Replace **bold** with placeholders, escaping the content
+            text = text.replace(/\*\*(.+?)\*\*/g, (match, content) => {
+                const placeholder = `__PLACEHOLDER_${placeholderIndex++}__`;
+                placeholders.push('<strong>' + escapeHtml(content) + '</strong>');
+                return placeholder;
+            });
+            
+            // Replace *italic* with placeholders, escaping the content
+            text = text.replace(/\*(.+?)\*/g, (match, content) => {
+                const placeholder = `__PLACEHOLDER_${placeholderIndex++}__`;
+                placeholders.push('<em>' + escapeHtml(content) + '</em>');
+                return placeholder;
+            });
+            
+            // Escape any remaining HTML in the text
+            text = escapeHtml(text);
+            
+            // Restore placeholders with formatted HTML
+            placeholders.forEach((html, index) => {
+                text = text.replace(`__PLACEHOLDER_${index}__`, html);
+            });
+            
+            return text;
+        }
+
+        // Helper function to escape HTML special characters
+        function escapeHtml(text) {
+            return String(text).replace(/[&<>"']/g, char => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            }[char]));
         }
 
     </script>
